@@ -1,1 +1,1567 @@
-FULL_CONTENT_WILL_BE_REPLACED
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EMANOMIND · CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --accent: #f0a07a;
+    --ink: #f4efe8;
+    --muted: #c4bbaf;
+    --glass: rgba(28, 25, 22, 0.62);
+    --glass-hi: rgba(38, 34, 30, 0.82);
+  }
+  body { font-family: 'Urbanist', system-ui, sans-serif; background: #000; color: var(--ink); margin: 0; }
+  .backdrop { position: fixed; inset: 0; z-index: 0; }
+  .backdrop img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); filter: brightness(0.42) contrast(1.08); }
+  .backdrop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,12,10,0.78) 0%, rgba(14,12,10,0.5) 45%, rgba(14,12,10,0.72) 100%); }
+  .glass { background: var(--glass); backdrop-filter: blur(26px) saturate(1.6); border: 1px solid rgba(255,255,255,0.08); }
+  .glass-hi { background: var(--glass-hi); backdrop-filter: blur(20px) saturate(1.4); border: 1px solid rgba(255,255,255,0.07); }
+  .topnav { position: relative; }
+  .pill { position: absolute; top: 4px; height: calc(100% - 8px); background: var(--accent); border-radius: 999px; transition: all 0.5s cubic-bezier(.22,1,.36,1); z-index: 0; }
+  .nav-btn { transition: color 0.25s ease, transform 0.15s ease; }
+  .nav-btn:active { transform: scale(0.96); }
+  button, .deal, .proposta-card, .projeto-card, .cliente-card, .lead-card, .processo-card, .contrato-card {
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+  button:active { transform: scale(0.97); }
+  .deal:hover, .proposta-card:hover, .projeto-card:hover, .cliente-card:hover, .lead-card:hover, .processo-card:hover, .contrato-card:hover {
+    transform: translateY(-2px);
+  }
+  .bg-\[var\(--accent\)\]:hover { filter: brightness(1.05); }
+  .bg-\[var\(--accent\)\]:active { filter: brightness(0.95); }
+  .deal { transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; }
+  .deal:hover { transform: translateY(-2px); }
+  .deal.dragging { opacity: 0.5; transform: scale(0.96); box-shadow: 0 10px 30px -10px rgba(240,160,122,0.4); }
+  .kanban-col { transition: box-shadow 0.2s ease, background 0.2s ease; }
+  .kanban-col.drag-over { box-shadow: inset 0 0 0 1px var(--accent); background: rgba(240,160,122,0.06); }
+  .proposta-card { transition: background 0.2s ease; }
+  .proposta-card:hover { background: rgba(255,255,255,0.04); }
+  .page-enter { animation: pageIn 0.45s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="backdrop">
+  <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1800&q=75" alt="" />
+</div>
+
+<header class="glass fixed top-0 left-0 right-0 z-20 flex items-center gap-8 px-8 py-3.5">
+  <a href="#" class="flex items-center gap-2.5 no-underline text-[var(--ink)]">
+    <div class="w-8 h-8 rounded-lg bg-[var(--accent)] grid place-items-center font-bold text-[#1a120e] text-sm">E</div>
+    <div>
+      <div class="font-semibold tracking-wide">EMANOMIND</div>
+      <div class="text-[11px] text-[var(--muted)] -mt-0.5">Branding & Automation</div>
+    </div>
+  </a>
+
+  <nav id="nav" class="topnav flex bg-black/30 p-1 rounded-full">
+    <div id="pill" class="pill"></div>
+    <button data-page="visao" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Visão Geral</button>
+    <button data-page="pipeline" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Pipeline</button>
+    <button data-page="projetos" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Projetos</button>
+    <button data-page="processos" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Processos</button>
+    <button data-page="leads" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Leads</button>
+    <button data-page="propostas" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Propostas</button>
+    <button data-page="contratos" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Contratos</button>
+    <button data-page="clientes" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Clientes</button>
+    <button data-page="equipe" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Equipe</button>
+    <button data-page="relatorios" class="nav-btn px-4 py-2 text-[13.5px] font-medium text-[var(--muted)] rounded-full">Relatórios</button>
+  </nav>
+
+  <div class="ml-auto flex items-center gap-3">
+    <button class="glass px-3 py-1.5 rounded-full text-xs">⌘K</button>
+    <button class="bg-[var(--accent)] text-[#1a120e] px-4 py-1.5 rounded-full text-sm font-semibold">Novo projeto</button>
+  </div>
+</header>
+
+<main id="main" class="relative z-10 pt-24 px-10 pb-16 max-w-7xl mx-auto"></main>
+
+<script>
+const pipelineData = [
+  { id: 'PRJ-035', title: 'UI/UX Companion + Onboarding', client: 'BusinAI', value: 'R$ 41.200', stage: 'Imersão' },
+  { id: 'PRJ-039', title: 'Identidade Visual + Site', client: 'Radar Agrotech', value: 'R$ 32.500', stage: 'Arquitetura' },
+  { id: 'PRJ-042', title: 'Rebranding + Automação', client: 'Plectus Química', value: 'R$ 48.900', stage: 'Estresse' },
+  { id: 'PRJ-037', title: 'Brand Book + Sistema', client: 'Emano Studio', value: 'R$ 27.800', stage: 'Escala' },
+  { id: 'PRJ-031', title: 'Automação de Prospecção', client: 'Froc BioPremix', value: 'R$ 36.400', stage: 'Entregue' },
+  { id: 'PRJ-044', title: 'Portal do Cliente', client: 'Advocacia de Grife', value: 'R$ 22.000', stage: 'Imersão' },
+  { id: 'PRJ-041', title: 'Sequência de E-mail', client: 'Clínica Premium', value: 'R$ 18.500', stage: 'Arquitetura' }
+];
+
+function initPipeline() {
+  const cols = document.querySelectorAll('.kanban-col');
+  cols.forEach(col => {
+    const cardsContainer = col.querySelector('.kanban-cards');
+    cardsContainer.innerHTML = '';
+    col.addEventListener('dragover', e => {
+      e.preventDefault();
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card && cardsContainer) {
+        cardsContainer.appendChild(card);
+        card.classList.remove('dragging');
+        const item = pipelineData.find(p => p.id === id);
+        if (item) item.stage = col.dataset.stage;
+        updatePipelineCounts();
+        // subtle drop animation
+        card.style.transform = 'scale(1.03)';
+        setTimeout(() => card.style.transform = '', 180);
+      }
+    });
+  });
+
+  pipelineData.forEach(p => {
+    const col = document.querySelector(`.kanban-col[data-stage="${p.stage}"] .kanban-cards`);
+    if (!col) return;
+    const card = document.createElement('div');
+    card.className = 'deal glass-hi rounded-xl p-3 cursor-grab active:cursor-grabbing';
+    card.draggable = true;
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="flex justify-between items-start gap-2">
+        <div>
+          <strong class="text-sm">${p.title}</strong>
+          <div class="text-xs text-[var(--muted)] mt-1">${p.client} · ${p.value}</div>
+        </div>
+        <button class="remove-project text-[#f6a2ab] text-xs px-1.5 py-0.5 rounded hover:bg-white/10" data-id="${p.id}">✕</button>
+      </div>
+    `;
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', p.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.querySelector('.remove-project').addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (confirm('Remover este projeto do pipeline?')) {
+        const idx = pipelineData.findIndex(item => item.id === p.id);
+        if (idx > -1) pipelineData.splice(idx, 1);
+        card.remove();
+        updatePipelineCounts();
+      }
+    });
+    card.querySelector('.remove-project').addEventListener('mousedown', e => e.stopPropagation());
+    col.appendChild(card);
+  });
+
+  updatePipelineCounts();
+
+  const addBtn = document.getElementById('add-pipeline-project');
+  if (addBtn) {
+    addBtn.onclick = () => {
+      const title = prompt('Nome do projeto:');
+      if (!title) return;
+      const client = prompt('Cliente:') || 'Novo cliente';
+      const value = prompt('Valor (ex: R$ 25.000):') || 'R$ 0';
+      const id = 'PRJ-' + (100 + pipelineData.length);
+      const newProject = { id, title, client, value, stage: 'Imersão' };
+      pipelineData.push(newProject);
+      initPipeline();
+    };
+  }
+}
+
+function updatePipelineCounts() {
+  document.querySelectorAll('.kanban-col').forEach(col => {
+    const count = col.querySelectorAll('.deal').length;
+    const meta = col.querySelector('[data-count]');
+    if (meta) meta.textContent = `${count} projeto${count !== 1 ? 's' : ''}`;
+  });
+}
+
+const projetosData = {
+  'PRJ-042': {
+    client: 'Plectus Química',
+    title: 'Rebranding Estratégico + Automação de Fluxos',
+    stage: 'Estresse',
+    stageClass: 'text-[#f0c477]',
+    value: 'R$ 48.900',
+    progress: 72,
+    deadline: '12 de novembro',
+    responsible: 'João Emanuel',
+    started: '14 de outubro',
+    description: 'Projeto completo de rebranding de alto padrão com automação dos fluxos internos de atendimento e vendas.',
+    deliverables: [
+      { name: 'Brand Strategy', status: 'Concluído', date: '28 out' },
+      { name: 'Visual Identity + Brand Book', status: 'Em revisão', date: '05 nov' },
+      { name: 'Automação de Processos', status: 'Em andamento', date: '10 nov' },
+      { name: 'Site Institucional', status: 'Aguardando', date: '—' }
+    ],
+    timeline: [
+      { phase: 'Imersão', done: true },
+      { phase: 'Arquitetura', done: true },
+      { phase: 'Estresse', done: false, current: true },
+      { phase: 'Escala', done: false }
+    ]
+  },
+  'PRJ-039': {
+    client: 'Radar Agrotech',
+    title: 'Identidade Visual + Site Institucional',
+    stage: 'Arquitetura',
+    stageClass: 'text-[var(--accent)]',
+    value: 'R$ 32.500',
+    progress: 45,
+    deadline: '18 de novembro',
+    responsible: 'João Emanuel',
+    started: '21 de outubro',
+    description: 'Sistema de identidade visual e site de alta conversão para posicionamento premium no setor agrotech.',
+    deliverables: [
+      { name: 'Pesquisa e Arquitetura de Marca', status: 'Concluído', date: '30 out' },
+      { name: 'Identidade Visual', status: 'Em andamento', date: '08 nov' },
+      { name: 'Site Institucional', status: 'Aguardando', date: '—' }
+    ],
+    timeline: [
+      { phase: 'Imersão', done: true },
+      { phase: 'Arquitetura', done: false, current: true },
+      { phase: 'Estresse', done: false },
+      { phase: 'Escala', done: false }
+    ]
+  }
+};
+
+function openProjeto(id) {
+  const p = projetosData[id] || projetosData['PRJ-042'];
+  const detail = document.getElementById('projeto-detail');
+  detail.innerHTML = `
+    <button id="back-to-projetos" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para projetos</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">PROJETO ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${p.title}</h2>
+          <div class="text-[var(--muted)] mt-1">${p.client} · Início ${p.started}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-semibold text-[var(--accent)]">${p.value}</div>
+          <div class="text-xs ${p.stageClass} mt-1">${p.stage} · ${p.progress}%</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Cliente</div>
+          <div class="font-medium mt-1">${p.client}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Responsável</div>
+          <div class="font-medium mt-1">${p.responsible}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Entrega prevista</div>
+          <div class="font-medium mt-1">${p.deadline}</div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <div class="text-sm text-[var(--muted)] mb-2">Progresso geral</div>
+        <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div class="h-full bg-[var(--accent)] rounded-full" style="width:${p.progress}%"></div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Metodologia</h3>
+        <div class="flex gap-2">
+          ${p.timeline.map(t => `
+            <div class="flex-1 text-center py-2 rounded-lg text-xs ${t.current ? 'bg-[var(--accent)] text-[#1a120e] font-medium' : t.done ? 'bg-white/10' : 'bg-black/30 text-[var(--muted)]'}">
+              ${t.phase}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Entregáveis</h3>
+        <div class="glass-hi rounded-xl overflow-hidden text-sm">
+          ${p.deliverables.map(d => `
+            <div class="grid grid-cols-3 px-4 py-3 border-b border-white/5 last:border-0">
+              <div>${d.name}</div>
+              <div class="text-[var(--muted)]">${d.status}</div>
+              <div class="text-right text-[var(--muted)]">${d.date}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Sobre o projeto</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${p.description}</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Atualizar status</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Arquivos</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Comentários</button>
+        <button id="gerar-projeto-pdf" class="glass px-5 py-2 rounded-full text-sm">Gerar PDF</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('projeto-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-projetos').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('projeto-list').classList.remove('hidden');
+  });
+  const pdfBtn = document.getElementById('gerar-projeto-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', () => exportProjetoPDF(id));
+}
+
+const allLeads = [
+  { id: 'LD-2041', name: 'Marina Costa', company: 'Clínica Premium SP', source: 'WhatsApp', status: 'Qualificado', statusColor: 'text-[#84d9aa]', score: 86, value: 'R$ 38k' },
+  { id: 'LD-2038', name: 'Ricardo Alves', company: 'Advocacia de Grife', source: 'Indicação', status: 'Em negociação', statusColor: 'text-[#f0c477]', score: 92, value: 'R$ 52k' },
+  { id: 'LD-2035', name: 'Startup Orbit', company: 'SaaS B2B', source: 'Site', status: 'Novo', statusColor: 'text-[var(--accent)]', score: 64, value: 'R$ 24k' },
+  { id: 'LD-2031', name: 'Helena Martins', company: 'Consultoria Executiva', source: 'LinkedIn', status: 'Qualificado', statusColor: 'text-[#84d9aa]', score: 78, value: 'R$ 31k' },
+  { id: 'LD-2027', name: 'Grupo Horizonte', company: 'Corporação', source: 'Evento', status: 'Perdido', statusColor: 'text-[#f6a2ab]', score: 45, value: 'R$ 67k' }
+];
+
+function renderLeadList(leads) {
+  const container = document.getElementById('lead-list');
+  if (!container) return;
+  if (leads.length === 0) {
+    container.innerHTML = `<div class="glass rounded-2xl p-8 text-center text-[var(--muted)]">Nenhum lead encontrado</div>`;
+    return;
+  }
+  container.innerHTML = leads.map(l => `
+    <div class="lead-card glass rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition" data-id="${l.id}">
+      <div class="flex items-center gap-5">
+        <div class="text-xs font-mono text-[var(--muted)] w-20">${l.id}</div>
+        <div>
+          <div class="font-medium">${l.name}</div>
+          <div class="text-sm text-[var(--muted)] mt-0.5">${l.company} · ${l.source}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-8">
+        <div class="text-right min-w-[90px]">
+          <div class="font-semibold">${l.value}</div>
+          <div class="text-xs ${l.statusColor} mt-0.5">${l.status}</div>
+        </div>
+        <div class="text-right min-w-[50px]">
+          <div class="text-xs text-[var(--muted)]">Score</div>
+          <div class="font-medium">${l.score}</div>
+        </div>
+        <div class="text-[var(--muted)]">→</div>
+      </div>
+    </div>
+  `).join('');
+  container.querySelectorAll('.lead-card').forEach(card => {
+    card.addEventListener('click', () => openLead(card.dataset.id));
+  });
+}
+
+function exportProjetoPDF(id) {
+  const p = projetosData[id];
+  if (!p) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('EMANOMIND · Relatório de Projeto', 14, 20);
+  doc.setFontSize(12);
+  doc.text(p.title, 14, 32);
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text(`Cliente: ${p.client}`, 14, 42);
+  doc.text(`Valor: ${p.value}`, 14, 50);
+  doc.text(`Etapa: ${p.stage} · ${p.progress}%`, 14, 58);
+  doc.text(`Entrega: ${p.deadline}`, 14, 66);
+  doc.text(`Responsável: ${p.responsible}`, 14, 74);
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Entregáveis', 14, 90);
+  let y = 100;
+  (p.deliverables || []).forEach(d => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    doc.text(`${d.name} — ${d.status}`, 14, y);
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text(d.date, 20, y + 6);
+    doc.setTextColor(0);
+    y += 14;
+  });
+
+  doc.save(`EMANOMIND-Projeto-${id}.pdf`);
+}
+
+function exportPropostaPDF(id) {
+  const p = propostasData[id];
+  if (!p) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('EMANOMIND · Proposta Comercial', 14, 20);
+  doc.setFontSize(12);
+  doc.text(p.title, 14, 32);
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text(`Cliente: ${p.client}`, 14, 42);
+  doc.text(`Valor: ${p.value}`, 14, 50);
+  doc.text(`Status: ${p.status}`, 14, 58);
+  doc.text(`Prazo: ${p.timeline || p.valid}`, 14, 66);
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Escopo', 14, 80);
+  let y = 90;
+  (p.scope || []).forEach(s => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    doc.text(`${s.n}  ${s.t}`, 14, y);
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text(s.d, 20, y + 6, { maxWidth: 170 });
+    doc.setTextColor(0);
+    y += 16;
+  });
+
+  doc.save(`EMANOMIND-Proposta-${id}.pdf`);
+}
+
+function exportLeadsPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const search = (document.getElementById('lead-search')?.value || '').toLowerCase();
+  const status = document.getElementById('lead-status-filter')?.value || '';
+  const source = document.getElementById('lead-source-filter')?.value || '';
+  const filtered = allLeads.filter(l => {
+    const matchesSearch = !search || l.name.toLowerCase().includes(search) || l.company.toLowerCase().includes(search) || l.id.toLowerCase().includes(search);
+    const matchesStatus = !status || l.status === status;
+    const matchesSource = !source || l.source === source;
+    return matchesSearch && matchesStatus && matchesSource;
+  });
+
+  doc.setFontSize(18);
+  doc.text('EMANOMIND · Relatório de Leads', 14, 20);
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} · ${filtered.length} leads`, 14, 28);
+
+  let y = 42;
+  filtered.forEach((l, i) => {
+    if (y > 270) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`${l.id} · ${l.name}`, 14, y);
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    doc.text(`${l.company} · ${l.source} · ${l.status} · Score ${l.score} · ${l.value}`, 14, y + 6);
+    y += 16;
+  });
+
+  doc.save(`EMANOMIND-Leads-${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+function filterLeads() {
+  const search = (document.getElementById('lead-search')?.value || '').toLowerCase();
+  const status = document.getElementById('lead-status-filter')?.value || '';
+  const source = document.getElementById('lead-source-filter')?.value || '';
+  const filtered = allLeads.filter(l => {
+    const matchesSearch = !search || 
+      l.name.toLowerCase().includes(search) || 
+      l.company.toLowerCase().includes(search) || 
+      l.id.toLowerCase().includes(search);
+    const matchesStatus = !status || l.status === status;
+    const matchesSource = !source || l.source === source;
+    return matchesSearch && matchesStatus && matchesSource;
+  });
+  renderLeadList(filtered);
+}
+
+const leadsData = {
+  'LD-2041': {
+    name: 'Marina Costa',
+    company: 'Clínica Premium SP',
+    source: 'WhatsApp',
+    status: 'Qualificado',
+    statusClass: 'text-[#84d9aa]',
+    score: 86,
+    value: 'R$ 38.000',
+    email: 'marina@clinicpremium.com',
+    phone: '+55 11 98888-1234',
+    interest: 'Rebranding + Automação de Agendamento',
+    notes: 'Chegou via WhatsApp do site. Já respondeu as perguntas de qualificação. Interesse alto em autoridade e redução de no-show.',
+    timeline: [
+      { date: 'Hoje', action: 'Qualificado pelo agente WhatsApp' },
+      { date: 'Ontem', action: 'Primeira mensagem recebida' }
+    ]
+  },
+  'LD-2038': {
+    name: 'Ricardo Alves',
+    company: 'Advocacia de Grife',
+    source: 'Indicação',
+    status: 'Em negociação',
+    statusClass: 'text-[#f0c477]',
+    score: 92,
+    value: 'R$ 52.000',
+    email: 'ricardo@alvesadv.com',
+    phone: '+55 11 97777-5678',
+    interest: 'Identidade Visual + Portal do Cliente',
+    notes: 'Indicação de cliente atual. Reunião agendada para amanhã. Foco em percepção de alto valor.',
+    timeline: [
+      { date: 'Há 2 dias', action: 'Reunião de descoberta realizada' },
+      { date: 'Há 5 dias', action: 'Lead criado por indicação' }
+    ]
+  }
+};
+
+function openLead(id) {
+  const l = leadsData[id] || leadsData['LD-2041'];
+  const detail = document.getElementById('lead-detail');
+  detail.innerHTML = `
+    <button id="back-to-leads" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para leads</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">LEAD ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${l.name}</h2>
+          <div class="text-[var(--muted)] mt-1">${l.company} · ${l.source}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-semibold text-[var(--accent)]">${l.value}</div>
+          <div class="text-xs ${l.statusClass} mt-1">${l.status} · Score ${l.score}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">E-mail</div>
+          <div class="font-medium mt-1">${l.email}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Telefone</div>
+          <div class="font-medium mt-1">${l.phone}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Interesse</div>
+          <div class="font-medium mt-1">${l.interest}</div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Notas</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${l.notes}</p>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Histórico</h3>
+        <div class="space-y-2 text-sm">
+          ${l.timeline.map(t => `<div class="flex gap-4"><span class="text-[var(--muted)] w-20">${t.date}</span><span>${t.action}</span></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Criar proposta</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Agendar reunião</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Mover para processo</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('lead-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-leads').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('lead-list').classList.remove('hidden');
+  });
+}
+
+const processosData = {
+  'PRC-018': {
+    client: 'Plectus Química',
+    title: 'Triagem e Nutrição de Leads WhatsApp',
+    status: 'Ativo',
+    statusClass: 'text-[#84d9aa]',
+    type: 'WhatsApp Learning',
+    runs: '248 execuções / mês',
+    conversion: '31%',
+    description: 'Agente de WhatsApp que qualifica leads, responde dúvidas frequentes e nutre automaticamente até a reunião comercial.',
+    steps: [
+      { n: '01', name: 'Recebimento do lead', detail: 'Via site, formulário ou anúncio' },
+      { n: '02', name: 'Qualificação automática', detail: 'Perguntas de segmentação + score' },
+      { n: '03', name: 'Nutrição', detail: 'Sequência de mensagens personalizadas' },
+      { n: '04', name: 'Agendamento', detail: 'Integração com calendário do comercial' }
+    ]
+  },
+  'PRC-015': {
+    client: 'Radar Agrotech',
+    title: 'Integração CRM + E-mail Sequence',
+    status: 'Ativo',
+    statusClass: 'text-[#84d9aa]',
+    type: 'Workflow Automation',
+    runs: '96 execuções / mês',
+    conversion: '19%',
+    description: 'Fluxo que sincroniza leads do CRM com sequências de e-mail segmentadas por perfil e estágio.',
+    steps: [
+      { n: '01', name: 'Captura no CRM', detail: 'Novo lead ou mudança de estágio' },
+      { n: '02', name: 'Segmentação', detail: 'Tags automáticas por interesse' },
+      { n: '03', name: 'Disparo de sequência', detail: 'E-mails personalizados' },
+      { n: '04', name: 'Atualização de status', detail: 'Retorno para o CRM' }
+    ]
+  }
+};
+
+function openProcesso(id) {
+  const p = processosData[id] || processosData['PRC-018'];
+  const detail = document.getElementById('processo-detail');
+  detail.innerHTML = `
+    <button id="back-to-processos" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para processos</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">PROCESSO ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${p.title}</h2>
+          <div class="text-[var(--muted)] mt-1">${p.client} · ${p.type}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs ${p.statusClass} font-medium">${p.status}</div>
+          <div class="text-sm text-[var(--muted)] mt-1">${p.runs}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Cliente</div>
+          <div class="font-medium mt-1">${p.client}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Tipo</div>
+          <div class="font-medium mt-1">${p.type}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Conversão</div>
+          <div class="font-medium mt-1">${p.conversion}</div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Fluxo</h3>
+        <div class="space-y-3">
+          ${p.steps.map(s => `
+            <div class="flex gap-4 items-start">
+              <div class="w-8 h-8 rounded-full bg-[var(--accent)] text-[#1a120e] text-xs font-medium grid place-items-center flex-shrink-0">${s.n}</div>
+              <div>
+                <div class="font-medium">${s.name}</div>
+                <div class="text-sm text-[var(--muted)]">${s.detail}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Descrição</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${p.description}</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Editar fluxo</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Ver execuções</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Pausar</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('processo-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-processos').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('processo-list').classList.remove('hidden');
+  });
+}
+
+const clientesData = {
+  'CLI-012': {
+    name: 'Plectus Química',
+    segment: 'Corporação',
+    ltv: 'R$ 186.000',
+    status: 'Ativo',
+    contact: 'Carlos Mendes',
+    email: 'carlos@plectus.com.br',
+    phone: '+55 11 3333-4444',
+    since: 'Março 2025',
+    projects: ['Rebranding + Automação (em andamento)', 'Brand Book (concluído)'],
+    notes: 'Cliente estratégico. Foco em autoridade no mercado químico e automação de processos internos.'
+  },
+  'CLI-009': {
+    name: 'Radar Agrotech',
+    segment: 'Agrotech',
+    ltv: 'R$ 92.000',
+    status: 'Ativo',
+    contact: 'Ana Ribeiro',
+    email: 'ana@radaragrotech.com',
+    phone: '+55 11 2222-5555',
+    since: 'Junho 2025',
+    projects: ['Identidade Visual + Site (em andamento)'],
+    notes: 'Posicionamento premium no setor agrotech. Alta receptividade a propostas de automação.'
+  }
+};
+
+function openCliente(id) {
+  const c = clientesData[id] || clientesData['CLI-012'];
+  const detail = document.getElementById('cliente-detail');
+  detail.innerHTML = `
+    <button id="back-to-clientes" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para clientes</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">CLIENTE ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${c.name}</h2>
+          <div class="text-[var(--muted)] mt-1">${c.segment} · Cliente desde ${c.since}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-semibold text-[var(--accent)]">${c.ltv}</div>
+          <div class="text-xs text-[#84d9aa] mt-1">${c.status}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Contato</div>
+          <div class="font-medium mt-1">${c.contact}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">E-mail</div>
+          <div class="font-medium mt-1">${c.email}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Telefone</div>
+          <div class="font-medium mt-1">${c.phone}</div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Projetos</h3>
+        <div class="space-y-2 text-sm">
+          ${c.projects.map(p => `<div class="glass-hi rounded-lg px-4 py-3">${p}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Notas</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${c.notes}</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button id="editar-cliente" class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Editar</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Novo projeto</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Nova proposta</button>
+        <button id="gerar-cliente-pdf" class="glass px-5 py-2 rounded-full text-sm">Gerar PDF</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('cliente-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-clientes').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('cliente-list').classList.remove('hidden');
+  });
+  const pdfBtn = document.getElementById('gerar-cliente-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', () => exportClientePDF(id));
+  const editBtn = document.getElementById('editar-cliente');
+  if (editBtn) editBtn.addEventListener('click', () => editCliente(id));
+}
+
+function editCliente(id) {
+  const c = clientesData[id];
+  if (!c) return;
+  const detail = document.getElementById('cliente-detail');
+  detail.innerHTML = `
+    <button id="back-to-clientes" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar</button>
+    <div class="glass rounded-2xl p-8">
+      <h2 class="text-2xl font-medium mb-6">Editar cliente</h2>
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="text-xs text-[var(--muted)]">Nome</label>
+          <input id="edit-name" value="${c.name}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Segmento</label>
+          <input id="edit-segment" value="${c.segment}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Contato</label>
+          <input id="edit-contact" value="${c.contact}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">E-mail</label>
+          <input id="edit-email" value="${c.email}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Telefone</label>
+          <input id="edit-phone" value="${c.phone}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">LTV</label>
+          <input id="edit-ltv" value="${c.ltv}" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="text-xs text-[var(--muted)]">Notas</label>
+        <textarea id="edit-notes" rows="4" class="w-full mt-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]">${c.notes}</textarea>
+      </div>
+      <div class="flex gap-3">
+        <button id="salvar-cliente" class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Salvar</button>
+        <button id="cancelar-edicao" class="glass px-5 py-2 rounded-full text-sm">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('back-to-clientes').addEventListener('click', () => openCliente(id));
+  document.getElementById('cancelar-edicao').addEventListener('click', () => openCliente(id));
+  document.getElementById('salvar-cliente').addEventListener('click', () => {
+    const name = document.getElementById('edit-name').value.trim();
+    const segment = document.getElementById('edit-segment').value.trim();
+    const contact = document.getElementById('edit-contact').value.trim();
+    const email = document.getElementById('edit-email').value.trim();
+    const phone = document.getElementById('edit-phone').value.trim();
+    const ltv = document.getElementById('edit-ltv').value.trim();
+    const notes = document.getElementById('edit-notes').value.trim();
+
+    // Clear previous errors
+    document.querySelectorAll('.field-error').forEach(el => el.remove());
+    document.querySelectorAll('input, textarea').forEach(el => el.classList.remove('border-red-400'));
+
+    let hasError = false;
+
+    function showError(inputId, message) {
+      const input = document.getElementById(inputId);
+      input.classList.add('border-red-400');
+      const err = document.createElement('div');
+      err.className = 'field-error text-xs text-[#f6a2ab] mt-1';
+      err.textContent = message;
+      input.parentNode.appendChild(err);
+      hasError = true;
+    }
+
+    if (!name) showError('edit-name', 'Nome é obrigatório');
+    if (!contact) showError('edit-contact', 'Contato é obrigatório');
+    if (!email) {
+      showError('edit-email', 'E-mail é obrigatório');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('edit-email', 'E-mail inválido');
+    }
+    if (phone && phone.length < 8) {
+      showError('edit-phone', 'Telefone muito curto');
+    }
+
+    if (hasError) return;
+
+    c.name = name;
+    c.segment = segment;
+    c.contact = contact;
+    c.email = email;
+    c.phone = phone;
+    c.ltv = ltv;
+    c.notes = notes;
+    openCliente(id);
+    const card = document.querySelector(`.cliente-card[data-id="${id}"]`);
+    if (card) {
+      card.querySelector('.font-medium').textContent = c.name;
+      card.querySelector('.text-sm').textContent = `${c.segment} · ${c.projects?.length || 0} projeto(s) aberto(s)`;
+      card.querySelector('.font-semibold').textContent = c.ltv;
+    }
+  });
+}
+
+function exportClientePDF(id) {
+  const c = clientesData[id];
+  if (!c) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('EMANOMIND · Ficha do Cliente', 14, 20);
+  doc.setFontSize(12);
+  doc.text(c.name, 14, 32);
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text(`Segmento: ${c.segment}`, 14, 42);
+  doc.text(`Lifetime Value: ${c.ltv}`, 14, 50);
+  doc.text(`Status: ${c.status}`, 14, 58);
+  doc.text(`Cliente desde: ${c.since}`, 14, 66);
+  doc.text(`Contato: ${c.contact}`, 14, 74);
+  doc.text(`E-mail: ${c.email}`, 14, 82);
+  doc.text(`Telefone: ${c.phone}`, 14, 90);
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Projetos', 14, 105);
+  let y = 115;
+  c.projects.forEach(p => {
+    doc.setFontSize(11);
+    doc.setTextColor(60);
+    doc.text(`• ${p}`, 14, y);
+    y += 8;
+  });
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Notas', 14, y + 10);
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(c.notes, 14, y + 20, { maxWidth: 180 });
+
+  doc.save(`EMANOMIND-Cliente-${id}.pdf`);
+}
+
+const contratosData = {
+  'CTR-087': {
+    client: 'Plectus Química',
+    title: 'Rebranding Estratégico + Automação de Fluxos',
+    value: 'R$ 48.900',
+    status: 'Assinado',
+    statusClass: 'text-[#84d9aa]',
+    start: '14 de outubro de 2026',
+    end: '14 de dezembro de 2026',
+    responsible: 'João Emanuel',
+    terms: 'Pagamento 40% na assinatura, 40% na entrega da identidade, 20% na finalização da automação. Prazo de 8 semanas.',
+    scope: 'Brand Strategy, Visual Identity, Workflow Automation e Digital Experience conforme proposta P-1187.'
+  },
+  'CTR-084': {
+    client: 'Radar Agrotech',
+    title: 'Identidade Visual + Site Institucional',
+    value: 'R$ 32.500',
+    status: 'Assinado',
+    statusClass: 'text-[#84d9aa]',
+    start: '21 de outubro de 2026',
+    end: '21 de dezembro de 2026',
+    responsible: 'João Emanuel',
+    terms: 'Pagamento 50% na assinatura e 50% na entrega final. Prazo de 6 semanas.',
+    scope: 'Visual Identity completa e site institucional de alta conversão.'
+  }
+};
+
+function openContrato(id) {
+  const c = contratosData[id] || contratosData['CTR-087'];
+  const detail = document.getElementById('contrato-detail');
+  detail.innerHTML = `
+    <button id="back-to-contratos" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para contratos</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">CONTRATO ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${c.title}</h2>
+          <div class="text-[var(--muted)] mt-1">${c.client}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-semibold text-[var(--accent)]">${c.value}</div>
+          <div class="text-xs ${c.statusClass} mt-1">${c.status}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Início</div>
+          <div class="font-medium mt-1">${c.start}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Término</div>
+          <div class="font-medium mt-1">${c.end}</div>
+        </div>
+        <div class="glass-hi rounded-xl p-4">
+          <div class="text-xs text-[var(--muted)]">Responsável</div>
+          <div class="font-medium mt-1">${c.responsible}</div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Escopo</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${c.scope}</p>
+      </div>
+
+      <div class="mb-8">
+        <h3 class="font-medium mb-2">Condições</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${c.terms}</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Enviar para assinatura</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Editar</button>
+        <button id="gerar-contrato-pdf" class="glass px-5 py-2 rounded-full text-sm">Gerar PDF</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('contrato-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-contratos').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('contrato-list').classList.remove('hidden');
+  });
+  const pdfBtn = document.getElementById('gerar-contrato-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', () => exportContratoPDF(id));
+}
+
+function exportContratoPDF(id) {
+  const c = contratosData[id];
+  if (!c) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text('EMANOMIND · Contrato', 14, 20);
+  doc.setFontSize(12);
+  doc.text(c.title, 14, 32);
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text(`Cliente: ${c.client}`, 14, 42);
+  doc.text(`Valor: ${c.value}`, 14, 50);
+  doc.text(`Status: ${c.status}`, 14, 58);
+  doc.text(`Vigência: ${c.start} a ${c.end}`, 14, 66);
+  doc.text(`Responsável: ${c.responsible}`, 14, 74);
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Escopo', 14, 90);
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(c.scope, 14, 100, { maxWidth: 180 });
+
+  doc.setTextColor(0);
+  doc.setFontSize(13);
+  doc.text('Condições', 14, 125);
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(c.terms, 14, 135, { maxWidth: 180 });
+
+  doc.save(`EMANOMIND-Contrato-${id}.pdf`);
+}
+
+const propostasData = {
+  'P-1187': {
+    client: 'Plectus Química',
+    title: 'Rebranding Estratégico + Automação de Fluxos',
+    value: 'R$ 48.900',
+    status: 'Aberta',
+    statusClass: 'text-[#f0c477]',
+    valid: 'Válida por 15 dias',
+    views: 'Visualizada 3x',
+    timeline: '8 semanas',
+    scope: [
+      { n: '01', t: 'Brand Strategy', d: 'Pesquisa de público-alvo de luxo, arquitetura de marca, manifesto autoral e tom de voz.' },
+      { n: '02', t: 'Visual Identity', d: 'Logotipo, tipografias proprietárias, sistema cromático e Brand Book de grife.' },
+      { n: '03', t: 'Workflow Automation', d: 'Integração de CRM, gateways e comunicação interna. Eliminação de gargalos manuais.' },
+      { n: '04', t: 'Digital Experience', d: 'Site institucional ultra-minimalista de alta conversão.' }
+    ],
+    pricing: [
+      { item: 'Brand Strategy', time: '2 semanas', value: 'R$ 12.400' },
+      { item: 'Visual Identity + Brand Book', time: '3 semanas', value: 'R$ 18.900' },
+      { item: 'Automação de Processos', time: '3 semanas', value: 'R$ 14.200' },
+      { item: 'Digital Experience', time: '2 semanas', value: 'R$ 3.400' }
+    ]
+  },
+  'P-1185': {
+    client: 'Radar Agrotech',
+    title: 'Identidade Visual + Site Institucional',
+    value: 'R$ 32.500',
+    status: 'Enviada',
+    statusClass: 'text-[var(--accent)]',
+    valid: 'Válida por 10 dias',
+    views: 'Não visualizada',
+    timeline: '6 semanas',
+    scope: [
+      { n: '01', t: 'Visual Identity', d: 'Sistema completo de identidade para o setor agrotech.' },
+      { n: '02', t: 'Digital Experience', d: 'Site institucional de alta performance e conversão.' }
+    ],
+    pricing: [
+      { item: 'Visual Identity', time: '3 semanas', value: 'R$ 19.800' },
+      { item: 'Site Institucional', time: '3 semanas', value: 'R$ 12.700' }
+    ]
+  },
+  'P-1181': {
+    client: 'Emano Studio',
+    title: 'Brand Book Completo + Sistema de Design',
+    value: 'R$ 27.800',
+    status: 'Aceita',
+    statusClass: 'text-[#84d9aa]',
+    valid: 'Aceita',
+    views: '—',
+    timeline: '5 semanas',
+    scope: [
+      { n: '01', t: 'Brand Book', d: 'Documento completo de identidade e aplicações.' }
+    ],
+    pricing: [
+      { item: 'Brand Book + Sistema', time: '5 semanas', value: 'R$ 27.800' }
+    ]
+  }
+};
+
+const pages = {
+  visao: `
+    <h1 class="text-3xl font-medium mb-1">Bom dia, João</h1>
+    <p class="text-[var(--muted)] mb-7">Q4 está 34% concluído. A agência tem R$ 186.420 em projetos ativos.</p>
+    <div class="grid grid-cols-4 gap-4 mb-5">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Receita contratada</div><div class="text-3xl font-semibold mt-1">R$ 428.900</div><div class="text-xs text-[#84d9aa] mt-1">+18% vs ano passado</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Projetos ativos</div><div class="text-3xl font-semibold mt-1">14</div><div class="text-xs text-[#84d9aa] mt-1">3 em Estresse</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ticket médio</div><div class="text-3xl font-semibold mt-1">R$ 38.200</div><div class="text-xs text-[#84d9aa] mt-1">+12%</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Pipeline ponderado</div><div class="text-3xl font-semibold mt-1">R$ 214.600</div><div class="text-xs text-[#84d9aa] mt-1">8 propostas abertas</div></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="glass rounded-2xl p-5">
+        <div class="text-xs text-[var(--muted)] mb-3">Receita — últimos 13 meses</div>
+        <div class="h-44 rounded-xl bg-gradient-to-b from-[rgba(240,160,122,0.18)] to-transparent relative overflow-hidden">
+          <div class="chart-line absolute bottom-0 left-0 right-0 h-1 bg-[var(--accent)]"></div>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-5">
+        <div class="text-xs text-[var(--muted)] mb-4">Próximas entregas</div>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">Brand Book — Plectus Química <span class="text-[var(--muted)]">amanhã</span></div>
+          <div class="flex justify-between">Automação WhatsApp — Radar <span class="text-[var(--muted)]">em 3 dias</span></div>
+          <div class="flex justify-between">Site institucional — Emano <span class="text-[var(--muted)]">em 6 dias</span></div>
+        </div>
+      </div>
+    </div>
+  `,
+  pipeline: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Pipeline de Projetos</h1>
+        <p class="text-[var(--muted)]">Arraste os cards entre as etapas</p>
+      </div>
+      <button id="add-pipeline-project" class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Adicionar projeto</button>
+    </div>
+    <div id="kanban" class="grid grid-cols-5 gap-3.5">
+      ${['Imersão','Arquitetura','Estresse','Escala','Entregue'].map(stage => `
+        <div class="kanban-col bg-black/40 rounded-2xl p-3.5 min-h-[480px]" data-stage="${stage}">
+          <h3 class="text-sm font-semibold mb-1">${stage}</h3>
+          <div class="kanban-meta text-[11.5px] text-[var(--muted)] mb-3" data-count>0 projetos</div>
+          <div class="kanban-cards space-y-2.5"></div>
+        </div>
+      `).join('')}
+    </div>
+  `,
+  projetos: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Projetos</h1>
+        <p class="text-[var(--muted)]">Todos os projetos em andamento e concluídos</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Novo projeto</button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ativos</div><div class="text-2xl font-semibold mt-1">14</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Valor em execução</div><div class="text-2xl font-semibold mt-1">R$ 186.420</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Em Estresse</div><div class="text-2xl font-semibold mt-1">3</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Entregues no mês</div><div class="text-2xl font-semibold mt-1">5</div></div>
+    </div>
+
+    <div id="projeto-list" class="space-y-3">
+      ${[
+        { id: 'PRJ-042', client: 'Plectus Química', title: 'Rebranding Estratégico + Automação', stage: 'Estresse', stageColor: 'text-[#f0c477]', value: 'R$ 48.900', progress: 72, deadline: '12 nov' },
+        { id: 'PRJ-039', client: 'Radar Agrotech', title: 'Identidade Visual + Site', stage: 'Arquitetura', stageColor: 'text-[var(--accent)]', value: 'R$ 32.500', progress: 45, deadline: '18 nov' },
+        { id: 'PRJ-037', client: 'Emano Studio', title: 'Brand Book + Sistema de Design', stage: 'Escala', stageColor: 'text-[#84d9aa]', value: 'R$ 27.800', progress: 88, deadline: '08 nov' },
+        { id: 'PRJ-035', client: 'BusinAI', title: 'UI/UX Companion + Onboarding', stage: 'Imersão', stageColor: 'text-[var(--muted)]', value: 'R$ 41.200', progress: 18, deadline: '28 nov' },
+        { id: 'PRJ-031', client: 'Froc BioPremix', title: 'Automação de Prospecção', stage: 'Entregue', stageColor: 'text-[#84d9aa]', value: 'R$ 36.400', progress: 100, deadline: 'Concluído' }
+      ].map(p => `
+        <div class="projeto-card glass rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition" data-id="${p.id}">
+          <div class="flex items-center gap-5">
+            <div class="text-xs font-mono text-[var(--muted)] w-20">${p.id}</div>
+            <div>
+              <div class="font-medium">${p.title}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${p.client} · Entrega ${p.deadline}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-10">
+            <div class="text-right min-w-[90px]">
+              <div class="font-semibold">${p.value}</div>
+              <div class="text-xs ${p.stageColor} mt-0.5">${p.stage}</div>
+            </div>
+            <div class="w-28">
+              <div class="text-xs text-[var(--muted)] mb-1">${p.progress}%</div>
+              <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-[var(--accent)] rounded-full" style="width:${p.progress}%"></div>
+              </div>
+            </div>
+            <div class="text-[var(--muted)]">→</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="projeto-detail" class="hidden"></div>
+  `,
+  processos: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Processos</h1>
+        <p class="text-[var(--muted)]">Fluxos de automação e engenharia de processos dos clientes</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Novo processo</button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ativos</div><div class="text-2xl font-semibold mt-1">9</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Em configuração</div><div class="text-2xl font-semibold mt-1">3</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Leads processados (30d)</div><div class="text-2xl font-semibold mt-1">1.842</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Taxa média de conversão</div><div class="text-2xl font-semibold mt-1">23%</div></div>
+    </div>
+
+    <div id="processo-list" class="space-y-3">
+      ${[
+        { id: 'PRC-018', client: 'Plectus Química', title: 'Triagem e Nutrição de Leads WhatsApp', status: 'Ativo', statusColor: 'text-[#84d9aa]', type: 'WhatsApp Learning', runs: '248/mês' },
+        { id: 'PRC-015', client: 'Radar Agrotech', title: 'Integração CRM + E-mail Sequence', status: 'Ativo', statusColor: 'text-[#84d9aa]', type: 'Workflow Automation', runs: '96/mês' },
+        { id: 'PRC-012', client: 'BusinAI', title: 'Onboarding Automatizado de Usuários', status: 'Em configuração', statusColor: 'text-[#f0c477]', type: 'Onboarding', runs: '—' },
+        { id: 'PRC-009', client: 'Emano Studio', title: 'Qualificação de Leads Inbound', status: 'Ativo', statusColor: 'text-[#84d9aa]', type: 'Sales Intelligence', runs: '134/mês' },
+        { id: 'PRC-006', client: 'Froc BioPremix', title: 'Follow-up Automático Pós-Proposta', status: 'Pausado', statusColor: 'text-[var(--muted)]', type: 'Nurturing', runs: '0' }
+      ].map(p => `
+        <div class="processo-card glass rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition" data-id="${p.id}">
+          <div class="flex items-center gap-5">
+            <div class="text-xs font-mono text-[var(--muted)] w-20">${p.id}</div>
+            <div>
+              <div class="font-medium">${p.title}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${p.client} · ${p.type}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-10">
+            <div class="text-right min-w-[100px]">
+              <div class="text-xs ${p.statusColor}">${p.status}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${p.runs}</div>
+            </div>
+            <div class="text-[var(--muted)]">→</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="processo-detail" class="hidden"></div>
+  `,
+  leads: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Leads</h1>
+        <p class="text-[var(--muted)]">Prospecção, qualificação e nutrição de oportunidades</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Novo lead</button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Novos (7d)</div><div class="text-2xl font-semibold mt-1">28</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Qualificados</div><div class="text-2xl font-semibold mt-1">14</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Em negociação</div><div class="text-2xl font-semibold mt-1">7</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Taxa de conversão</div><div class="text-2xl font-semibold mt-1">19%</div></div>
+    </div>
+
+    <div class="glass rounded-2xl p-4 mb-5 flex flex-wrap items-center gap-3">
+      <input id="lead-search" type="text" placeholder="Buscar por nome, empresa ou código..." class="flex-1 min-w-[240px] bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)] placeholder:text-[var(--muted)]" />
+      <select id="lead-status-filter" class="bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]">
+        <option value="">Todos os status</option>
+        <option value="Novo">Novo</option>
+        <option value="Qualificado">Qualificado</option>
+        <option value="Em negociação">Em negociação</option>
+        <option value="Perdido">Perdido</option>
+      </select>
+      <select id="lead-source-filter" class="bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[var(--accent)]">
+        <option value="">Todas as origens</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Indicação">Indicação</option>
+        <option value="Site">Site</option>
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="Evento">Evento</option>
+      </select>
+      <button id="export-leads-pdf" class="bg-[var(--accent)] text-[#1a120e] px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap">Exportar PDF</button>
+    </div>
+
+    <div id="lead-list" class="space-y-3"></div>
+    <div id="lead-detail" class="hidden"></div>
+  `,
+  propostas: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Propostas</h1>
+        <p class="text-[var(--muted)]">Propostas comerciais, Brand Books e escopos de automação</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Nova proposta</button>
+    </div>
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Em aberto</div><div class="text-2xl font-semibold mt-1">R$ 186.400</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Taxa de aceitação</div><div class="text-2xl font-semibold mt-1">68%</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Propostas enviadas</div><div class="text-2xl font-semibold mt-1">11</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Aguardando resposta</div><div class="text-2xl font-semibold mt-1">4</div></div>
+    </div>
+    <div id="proposta-list" class="space-y-3">
+      ${[
+        { id: 'P-1187', client: 'Plectus Química', title: 'Rebranding Estratégico + Automação de Fluxos', value: 'R$ 48.900', status: 'Aberta', statusColor: 'text-[#f0c477]', date: 'há 2 dias' },
+        { id: 'P-1185', client: 'Radar Agrotech', title: 'Identidade Visual + Site Institucional', value: 'R$ 32.500', status: 'Enviada', statusColor: 'text-[var(--accent)]', date: 'há 4 dias' },
+        { id: 'P-1181', client: 'Emano Studio', title: 'Brand Book Completo + Sistema de Design', value: 'R$ 27.800', status: 'Aceita', statusColor: 'text-[#84d9aa]', date: 'há 8 dias' },
+        { id: 'P-1176', client: 'BusinAI', title: 'UI/UX do Companion + Onboarding Automatizado', value: 'R$ 41.200', status: 'Rascunho', statusColor: 'text-[var(--muted)]', date: 'hoje' },
+        { id: 'P-1172', client: 'Froc BioPremix', title: 'Automação de Prospecção + WhatsApp Learning', value: 'R$ 36.400', status: 'Recusada', statusColor: 'text-[#f6a2ab]', date: 'há 12 dias' }
+      ].map(p => `
+        <div class="proposta-card glass rounded-2xl p-5 flex items-center justify-between cursor-pointer" data-id="${p.id}">
+          <div class="flex items-center gap-5">
+            <div class="text-xs font-mono text-[var(--muted)] w-16">${p.id}</div>
+            <div>
+              <div class="font-medium">${p.title}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${p.client} · ${p.date}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-8">
+            <div class="text-right">
+              <div class="font-semibold">${p.value}</div>
+              <div class="text-xs ${p.statusColor} mt-0.5">${p.status}</div>
+            </div>
+            <div class="text-[var(--muted)]">→</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="proposta-detail" class="hidden"></div>
+  `,
+  contratos: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Contratos</h1>
+        <p class="text-[var(--muted)]">Contratos assinados, em revisão e rascunhos</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Novo contrato</button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ativos</div><div class="text-2xl font-semibold mt-1">8</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Valor contratado</div><div class="text-2xl font-semibold mt-1">R$ 428.900</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Aguardando assinatura</div><div class="text-2xl font-semibold mt-1">2</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Vencendo em 30d</div><div class="text-2xl font-semibold mt-1">1</div></div>
+    </div>
+
+    <div id="contrato-list" class="space-y-3">
+      ${[
+        { id: 'CTR-087', client: 'Plectus Química', title: 'Rebranding + Automação', value: 'R$ 48.900', status: 'Assinado', statusColor: 'text-[#84d9aa]', start: '14 out', end: '14 dez' },
+        { id: 'CTR-084', client: 'Radar Agrotech', title: 'Identidade Visual + Site', value: 'R$ 32.500', status: 'Assinado', statusColor: 'text-[#84d9aa]', start: '21 out', end: '21 dez' },
+        { id: 'CTR-081', client: 'Emano Studio', title: 'Brand Book + Sistema', value: 'R$ 27.800', status: 'Em revisão', statusColor: 'text-[#f0c477]', start: '—', end: '—' },
+        { id: 'CTR-078', client: 'BusinAI', title: 'UI/UX Companion', value: 'R$ 41.200', status: 'Rascunho', statusColor: 'text-[var(--muted)]', start: '—', end: '—' }
+      ].map(c => `
+        <div class="contrato-card glass rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition" data-id="${c.id}">
+          <div class="flex items-center gap-5">
+            <div class="text-xs font-mono text-[var(--muted)] w-20">${c.id}</div>
+            <div>
+              <div class="font-medium">${c.title}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${c.client} · ${c.start} → ${c.end}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-8">
+            <div class="text-right min-w-[90px]">
+              <div class="font-semibold">${c.value}</div>
+              <div class="text-xs ${c.statusColor} mt-0.5">${c.status}</div>
+            </div>
+            <div class="text-[var(--muted)]">→</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="contrato-detail" class="hidden"></div>
+  `,
+  clientes: `
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-medium mb-1">Clientes</h1>
+        <p class="text-[var(--muted)]">21 contas ativas · 4 canais (Corporações, Premium, Startups, Tech)</p>
+      </div>
+      <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Novo cliente</button>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ativos</div><div class="text-2xl font-semibold mt-1">21</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Lifetime Value</div><div class="text-2xl font-semibold mt-1">R$ 1.86M</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Com projeto aberto</div><div class="text-2xl font-semibold mt-1">14</div></div>
+      <div class="glass rounded-2xl p-5"><div class="text-xs text-[var(--muted)]">Ticket médio</div><div class="text-2xl font-semibold mt-1">R$ 38.2k</div></div>
+    </div>
+
+    <div id="cliente-list" class="space-y-3">
+      ${[
+        { id: 'CLI-012', name: 'Plectus Química', segment: 'Corporação', ltv: 'R$ 186k', projects: 2, status: 'Ativo' },
+        { id: 'CLI-009', name: 'Radar Agrotech', segment: 'Agrotech', ltv: 'R$ 92k', projects: 1, status: 'Ativo' },
+        { id: 'CLI-007', name: 'Emano Studio', segment: 'Premium', ltv: 'R$ 74k', projects: 1, status: 'Ativo' },
+        { id: 'CLI-005', name: 'BusinAI', segment: 'SaaS / Tech', ltv: 'R$ 41k', projects: 1, status: 'Ativo' },
+        { id: 'CLI-003', name: 'Froc BioPremix', segment: 'Agrotech', ltv: 'R$ 36k', projects: 0, status: 'Concluído' }
+      ].map(c => `
+        <div class="cliente-card glass rounded-2xl p-5 flex items-center justify-between hover:bg-white/5 transition" data-id="${c.id}">
+          <div class="flex items-center gap-5 cursor-pointer flex-1" data-action="open">
+            <div class="text-xs font-mono text-[var(--muted)] w-20">${c.id}</div>
+            <div>
+              <div class="font-medium">${c.name}</div>
+              <div class="text-sm text-[var(--muted)] mt-0.5">${c.segment} · ${c.projects} projeto(s) aberto(s)</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right min-w-[80px]">
+              <div class="font-semibold">${c.ltv}</div>
+              <div class="text-xs text-[#84d9aa] mt-0.5">${c.status}</div>
+            </div>
+            <button data-action="manage" class="glass px-3 py-1.5 rounded-lg text-xs">Gerenciar</button>
+            <button data-action="delete" class="glass px-3 py-1.5 rounded-lg text-xs text-[#f6a2ab]">Excluir</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="cliente-detail" class="hidden"></div>
+  `,
+  equipe: `
+    <h1 class="text-3xl font-medium mb-1">Equipe</h1>
+    <p class="text-[var(--muted)] mb-6">Desempenho e metas do trimestre</p>
+    <div class="glass rounded-2xl p-5">
+      <div class="flex justify-between py-3 border-b border-white/10"><div><strong>João Emanuel</strong><br><span class="text-sm text-[var(--muted)]">Fundador · Estratégia</span></div><div>68% da meta</div></div>
+      <div class="flex justify-between py-3"><div><strong>Designer Sênior</strong><br><span class="text-sm text-[var(--muted)]">Identidade Visual</span></div><div>54% da meta</div></div>
+    </div>
+  `,
+  relatorios: `<h1 class="text-3xl font-medium mb-1">Relatórios</h1><p class="text-[var(--muted)] mb-6">Exportação e visão consolidada</p><div class="glass rounded-2xl p-6">Construtor de relatórios e exportação CSV (em construção)</div>`
+};
+
+function openProposta(id) {
+  const p = propostasData[id] || propostasData['P-1187'];
+  const detail = document.getElementById('proposta-detail');
+  detail.innerHTML = `
+    <button id="back-to-list" class="text-sm text-[var(--muted)] mb-5 flex items-center gap-1 hover:text-white">← Voltar para propostas</button>
+    <div class="glass rounded-2xl p-8">
+      <div class="flex justify-between items-start mb-8">
+        <div>
+          <div class="text-xs text-[var(--muted)] tracking-wider">PROPOSTA ${id}</div>
+          <h2 class="text-2xl font-medium mt-1">${p.title}</h2>
+          <div class="text-[var(--muted)] mt-1">${p.client} · ${p.valid}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-semibold text-[var(--accent)]">${p.value}</div>
+          <div class="text-xs ${p.statusClass} mt-1">${p.status} · ${p.views}</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="glass-hi rounded-xl p-4"><div class="text-xs text-[var(--muted)]">Cliente</div><div class="font-medium mt-1">${p.client}</div></div>
+        <div class="glass-hi rounded-xl p-4"><div class="text-xs text-[var(--muted)]">Responsável</div><div class="font-medium mt-1">João Emanuel</div><div class="text-sm text-[var(--muted)]">Atendimento direto</div></div>
+        <div class="glass-hi rounded-xl p-4"><div class="text-xs text-[var(--muted)]">Prazo estimado</div><div class="font-medium mt-1">${p.timeline}</div><div class="text-sm text-[var(--muted)]">Imersão → Escala</div></div>
+      </div>
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Escopo</h3>
+        <div class="space-y-3 text-sm">
+          ${p.scope.map(s => `<div class="flex gap-3"><span class="text-[var(--accent)]">${s.n}</span> <div><strong>${s.t}</strong> — ${s.d}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="mb-8">
+        <h3 class="font-medium mb-3">Investimento</h3>
+        <div class="glass-hi rounded-xl overflow-hidden text-sm">
+          <div class="grid grid-cols-3 px-4 py-3 border-b border-white/10 text-[var(--muted)] text-xs"><div>Entregável</div><div>Prazo</div><div class="text-right">Valor</div></div>
+          ${p.pricing.map(row => `<div class="grid grid-cols-3 px-4 py-3 border-b border-white/5"><div>${row.item}</div><div>${row.time}</div><div class="text-right">${row.value}</div></div>`).join('')}
+          <div class="grid grid-cols-3 px-4 py-3 font-medium"><div>Total</div><div>${p.timeline}</div><div class="text-right text-[var(--accent)]">${p.value}</div></div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button class="bg-[var(--accent)] text-[#1a120e] px-5 py-2 rounded-full text-sm font-semibold">Enviar proposta</button>
+        <button class="glass px-5 py-2 rounded-full text-sm">Editar</button>
+        <button id="gerar-proposta-pdf" class="glass px-5 py-2 rounded-full text-sm">Gerar PDF</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('proposta-list').classList.add('hidden');
+  detail.classList.remove('hidden');
+  document.getElementById('back-to-list').addEventListener('click', () => {
+    detail.classList.add('hidden');
+    document.getElementById('proposta-list').classList.remove('hidden');
+  });
+  const pdfBtn = document.getElementById('gerar-proposta-pdf');
+  if (pdfBtn) pdfBtn.addEventListener('click', () => exportPropostaPDF(id));
+}
+
+function render(page) {
+  const main = document.getElementById('main');
+  main.style.opacity = '0';
+  main.style.transform = 'translateY(6px)';
+  setTimeout(() => {
+    main.innerHTML = pages[page] || pages.visao;
+    main.classList.remove('page-enter');
+    void main.offsetWidth;
+    main.classList.add('page-enter');
+    main.style.opacity = '';
+    main.style.transform = '';
+
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.page === page);
+      b.style.color = b.dataset.page === page ? '#1a120e' : 'var(--muted)';
+    });
+    movePill(page);
+
+    if (page === 'pipeline') initPipeline();
+    if (page === 'propostas') {
+      document.querySelectorAll('.proposta-card').forEach(card => {
+        card.addEventListener('click', () => openProposta(card.dataset.id));
+      });
+    }
+    if (page === 'contratos') {
+      document.querySelectorAll('.contrato-card').forEach(card => {
+        card.addEventListener('click', () => openContrato(card.dataset.id));
+      });
+    }
+    if (page === 'clientes') {
+      document.querySelectorAll('.cliente-card').forEach(card => {
+        const id = card.dataset.id;
+        card.querySelector('[data-action="open"]')?.addEventListener('click', () => openCliente(id));
+        card.querySelector('[data-action="manage"]')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openCliente(id);
+        });
+        card.querySelector('[data-action="delete"]')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm('Excluir este cliente? Esta ação não pode ser desfeita.')) {
+            card.remove();
+          }
+        });
+      });
+    }
+    if (page === 'projetos') {
+      document.querySelectorAll('.projeto-card').forEach(card => {
+        card.addEventListener('click', () => openProjeto(card.dataset.id));
+      });
+    }
+    if (page === 'processos') {
+      document.querySelectorAll('.processo-card').forEach(card => {
+        card.addEventListener('click', () => openProcesso(card.dataset.id));
+      });
+    }
+    if (page === 'leads') {
+      renderLeadList(allLeads);
+      const search = document.getElementById('lead-search');
+      const status = document.getElementById('lead-status-filter');
+      const source = document.getElementById('lead-source-filter');
+      const exportBtn = document.getElementById('export-leads-pdf');
+      const excelBtn = document.getElementById('export-leads-excel');
+      if (search) search.addEventListener('input', filterLeads);
+      if (status) status.addEventListener('change', filterLeads);
+      if (source) source.addEventListener('change', filterLeads);
+      if (exportBtn) exportBtn.addEventListener('click', exportLeadsPDF);
+      if (excelBtn) excelBtn.addEventListener('click', exportLeadsExcel);
+    }
+  }, 120);
+}
+
+function movePill(page) {
+  const btn = document.querySelector(`[data-page="${page}"]`);
+  const pill = document.getElementById('pill');
+  const nav = document.getElementById('nav');
+  if (!btn || !pill || !nav) return;
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  pill.style.left = (btnRect.left - navRect.left) + 'px';
+  pill.style.width = btnRect.width + 'px';
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => render(btn.dataset.page));
+});
+
+render('visao');
+window.addEventListener('resize', () => {
+  const active = document.querySelector('.nav-btn.active');
+  if (active) movePill(active.dataset.page);
+});
+</script>
+</body>
+</html>
